@@ -1,0 +1,8 @@
+# Ignorar a pasta data-students e seu conteúdo
+data-students/
+
+# Ignorar a pasta rebuild e seu conteúdo
+rebuild/
+
+# Ignorar o arquivo baseline_model.pth
+baseline_model.pth
