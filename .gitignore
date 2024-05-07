@@ -6,3 +6,11 @@ rebuild/
 
 # Ignorar o arquivo baseline_model.pth
 baseline_model.pth
+
+cifar10/
+
+netG.pth
+
+netD.pth
+
+projeto.pdf
