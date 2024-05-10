@@ -1,10 +1,14 @@
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import os
+from keras.preprocessing.image import load_img, img_to_array
+
 # Definir o caminho para a pasta de treinamento
 train_dir = 'data-students/TRAIN'
 
-# Criar um gerador de dados de imagem com data augmentation
+# Subpastas que devem ser aplicadas data augmentation
+subfolders_augment = ['13', '38', '39', '44']
+
+# Data augmentation settings
 datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     rescale=1./255,
     rotation_range=40,
@@ -16,47 +20,21 @@ datagen = tf.keras.preprocessing.image.ImageDataGenerator(
     fill_mode='nearest'
 )
 
-# Carregar as imagens a partir da pasta de treinamento
-train_generator = datagen.flow_from_directory(
-    train_dir,
-    target_size=(32, 32),
-    batch_size=32,
-    class_mode='categorical'  # Mudar para 'categorical' para multiclasse
-)
-
-num_classes = train_generator.num_classes  # Obter o número de classes
-
-# Criar um modelo de base usando a API funcional do TensorFlow
-inputs = tf.keras.Input(shape=(32, 32, 3))
-x = tf.keras.layers.Conv2D(32, 3, activation='relu')(inputs)
-x = tf.keras.layers.MaxPooling2D()(x)
-x = tf.keras.layers.Conv2D(64, 3, activation='relu')(x)
-x = tf.keras.layers.MaxPooling2D()(x)
-x = tf.keras.layers.Conv2D(128, 3, activation='relu')(x)
-x = tf.keras.layers.Flatten()(x)
-x = tf.keras.layers.Dense(128, activation='relu')(x)
-outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)  # Mudar para 'softmax' para multiclasse
-
-model = tf.keras.Model(inputs, outputs)
-
-# Compilar o modelo
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',  # Mudar para 'categorical_crossentropy' para multiclasse
-              metrics=['accuracy'])
-
-# Treinar o modelo
-model.fit(train_generator, epochs=100)
-
-# Definir o caminho para o diretório onde deseja salvar as imagens aumentadas
+# Diretório para salvar as imagens aumentadas
 save_dir = 'augmented_images'
-
-# Verificar se o diretório de salvamento existe, se não, criá-lo
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
-# Iterar sobre o gerador de dados e salvar manualmente as imagens geradas
-for i, batch in enumerate(train_generator):
-    images, _ = batch  # Obter apenas as imagens, ignorando os rótulos
-    for j, image in enumerate(images):
-        filename = f'{save_dir}/augmented_image_{i * len(images) + j}.jpeg'
-        tf.keras.preprocessing.image.save_img(filename, image)
+# Processar apenas as subpastas especificadas
+for subfolder in subfolders_augment:
+    subfolder_path = os.path.join(train_dir, subfolder)
+    if os.path.isdir(subfolder_path):
+        for image_file in os.listdir(subfolder_path):
+            image_path = os.path.join(subfolder_path, image_file)
+            image = load_img(image_path, target_size=(32, 32))
+            image = img_to_array(image)
+            image = image.reshape((1,) + image.shape)
+            image_generator = datagen.flow(image, batch_size=1)
+            img = next(image_generator)[0]  # Obter a primeira imagem do batch
+            filename = os.path.join(save_dir, f'augmented_{subfolder}_{image_file}')
+            tf.keras.preprocessing.image.save_img(filename, img)
